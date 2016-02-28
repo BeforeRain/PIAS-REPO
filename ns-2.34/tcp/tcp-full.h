@@ -48,7 +48,7 @@
 
 #define TCPIP_BASE_PKTSIZE      40      /* base TCP/IP header in real life */
 /* these are used to mark packets as to why we xmitted them */
-#define REASON_NORMAL   0  
+#define REASON_NORMAL   0
 #define REASON_TIMEOUT  1
 #define REASON_DUPACK   2
 #define	REASON_RBP	3	/* if ever implemented */
@@ -57,7 +57,7 @@
 /* bits for the tcp_flags field below */
 /* from tcp.h in the "real" implementation */
 /* RST and URG are not used in the simulator */
- 
+
 #define TH_FIN  0x01        /* FIN: closing a connection */
 #define TH_SYN  0x02        /* SYN: starting a connection */
 #define TH_PUSH 0x08        /* PUSH: used here to "deliver" data */
@@ -87,8 +87,9 @@ public:
         	delack_timer_(this), flags_(0),
         	state_(TCPS_CLOSED), recent_ce_(FALSE),
 		  last_state_(TCPS_CLOSED), rq_(rcv_nxt_), last_ack_sent_(-1),
-		  informpacer(0) { }
+		  informpacer(0), enable_pias_(0), pias_prio_num_(0), pias_debug_(0) { }
 		// Mohammad: added informpacer
+		//Wei: add enable_pias_
 
 	~FullTcpAgent() { cancel_timers(); rq_.clear(); }
 	virtual void recv(Packet *pkt, Handler*);
@@ -107,9 +108,16 @@ protected:
 	virtual int set_prio(int seq, int maxseq);
 	virtual int calPrio(int prio);
 	virtual int byterm();
+	/* Wei: PIAS priority */
+	virtual int piasPrio(int bytes_sent);
+
 	int prio_scheme_;
 	int prio_num_; //number of priorities; 0: unlimited
-	int prio_cap_[7]; 
+	int prio_cap_[7];
+    int enable_pias_;   //wei: enable PIAS or not
+	int pias_prio_num_;	//wei: number of priorities used by PIAS (no more than 8)
+    int pias_thresh_[7];    //wei: demotion thresholds of PIAS
+	int pias_debug_;	//wei: debug mode for PIAS
 	int startseq_;
 	int last_prio_;
 	int seq_bound_;
@@ -121,7 +129,7 @@ protected:
 	int deadline; // time remain in us at the beginning
 	double start_time; //start time
 	int early_terminated_; //early terminated
-	
+
 	int closed_;
 	int ts_option_size_;	// header bytes in a ts option
 	int pipe_;		// estimate of pipe occupancy (for Sack)
@@ -135,18 +143,18 @@ protected:
 	int deflate_on_pack_;	// deflate on partial acks (reno:yes)
 	int data_on_syn_;   // send data on initial SYN?
 	double last_send_time_;	// time of last send
-  
+
 
 	/* Mohammad: state-variable for robust
-	   FCT measurement. 
+	   FCT measurement.
 	*/
-	int flow_remaining_; /* Number of bytes yet to be received from 
-			       the current flow (at the receiver). This is 
+	int flow_remaining_; /* Number of bytes yet to be received from
+			       the current flow (at the receiver). This is
 			       set by TCL when starting a flow. Receiver will
 			       set immediate ACKs when nothing remains to
 			       notify sender of flow completion. */
-       
-	/* Mohammad: state-variable to inform 
+
+	/* Mohammad: state-variable to inform
 	 * pacer (TBF) of receiving ecnecho for the flow
 	 */
 	int informpacer;
@@ -154,7 +162,7 @@ protected:
 
 	// Mohammad: if non-zero, set dupack threshold to max(3, dynamic_dupack_ * cwnd)_
 	double dynamic_dupack_;
-  
+
 	int close_on_empty_;	// close conn when buffer empty
 	int signal_on_empty_;	// signal when buffer is empty
 	int reno_fastrecov_;	// do reno-style fast recovery?
@@ -232,8 +240,8 @@ protected:
 	void prpkt(Packet*);		// print packet (debugging helper)
 	char *flagstr(int);		// print header flags as symbols
 	char *statestr(int);		// print states as symbols
-	
-	
+
+
 	/*
 	* the following are part of a tcpcb in "real" RFC793 TCP
 	*/
@@ -241,18 +249,18 @@ protected:
 	int flags_;     /* controls next output() call */
 	int state_;     /* enumerated type: FSM state */
 	int recent_ce_;	/* last ce bit we saw */
-	int ce_transition_; /* Mohammad: was there a transition in 
-			       recent_ce by last ACK. for DCTCP receiver 
+	int ce_transition_; /* Mohammad: was there a transition in
+			       recent_ce by last ACK. for DCTCP receiver
 			       state machine. */
 	int last_state_; /* FSM state at last pkt recv */
 	int rcv_nxt_;       /* next sequence number expected */
-	
+
 	ReassemblyQueue rq_;    /* TCP reassembly queue */
 	/*
 	* the following are part of a tcpcb in "real" RFC1323 TCP
 	*/
 	int last_ack_sent_; /* ackno field from last segment we sent */
-	
+
 	double recent_;		// ts on SYN written by peer
 	double recent_age_;	// my time when recent_ was set
 
