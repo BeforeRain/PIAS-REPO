@@ -43,7 +43,7 @@ drop_prio_ = 'true'
 prio_scheme_ = 2
 deque_prio_ = 'true'
 keep_order_ = 'true'
-prio_num_arr = [1, 8]
+prio_num_arr = [2]#, 8]
 ECN_scheme_ = 2 #Per-port ECN marking
 pias_thresh_0 = [759*1460, 911*1460, 995*1460, 947*1460, 1069*1460]
 pias_thresh_1 = [1128*1460, 1331*1460, 1310*1460, 1372*1460, 1405*1460]
@@ -58,7 +58,7 @@ topology_tors = 9
 topology_spines = 4
 topology_x = 1
 
-ns_path = '/home/zwy/ns-allinone-2.35/ns-2.35/ns'
+ns_path = '~/ns-allinone-2.34/ns-2.34/ns'
 sim_script = 'spine_empirical.tcl'
 
 threads=[]
@@ -68,6 +68,9 @@ for prio_num_ in prio_num_arr:
 	for i in range(len(load_arr)):
 
 		scheme = 'unknown'
+		#print switchAlg #scheme = 'unknown'
+                #print prio_num_
+                #print sourceAlg
 		if switchAlg == 'Priority' and prio_num_ > 1 and sourceAlg == 'DCTCP-Sack':
 			scheme = 'pias'
 		elif switchAlg == 'Priority' and prio_num_ == 1:
@@ -77,8 +80,9 @@ for prio_num_ in prio_num_arr:
 				scheme = 'lldct'
 
 		if scheme == 'unknown':
-			print 'Unknown scheme'
+			#print 'Unknown scheme'
 			sys.exit(0)
+                print scheme
 
 		#Directory name: workload_scheme_load_[load]
 		directory_name = 'websearch_%s_%d' % (scheme,int(load_arr[i]*10))
@@ -130,7 +134,6 @@ for prio_num_ in prio_num_arr:
 		print cmd
 		newthread=SimThread(cmd,directory_name)
 		threads.append(newthread)
-
 #Thread id
 thread_i = 0
 #A temporary array to store running threads
@@ -141,12 +144,14 @@ concurrent_thread_num = 0
 while True:
 	#If it is a legal thread and 'tmp_threads' still has capacity
 	if thread_i < len(threads) and len(tmp_threads) < max_thread_num:
+                print 1111
 		tmp_threads.append(threads[thread_i])
 		concurrent_thread_num = concurrent_thread_num + 1
 		thread_i = thread_i + 1
 	#No more thread or 'tmp_threads' does not have any capacity
 	#'tmp_threads' is not empty
 	elif len(tmp_threads) > 0:
+                print 2222
 		print 'Start '+str(len(tmp_threads))+' threads\n'
 		#Run current threads in 'tmp_threads' right now!
 		for t in tmp_threads:
@@ -161,3 +166,4 @@ while True:
 	#'tmp_threads' is empty
 	else:
 		break
+print "Completed"

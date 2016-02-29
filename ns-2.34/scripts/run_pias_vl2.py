@@ -58,7 +58,7 @@ topology_tors = 9
 topology_spines = 4
 topology_x = 1
 
-ns_path = '/home/zwy/ns-allinone-2.35/ns-2.35/ns'
+ns_path = '~/ns-allinone-2.34/ns-2.34/ns'
 sim_script = 'spine_empirical.tcl'
 
 threads = []
